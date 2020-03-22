@@ -9,27 +9,62 @@ const priority = {
     '-': 0,
     '*': 1,
     '/': 1,
-    'foo': 9999,
 };
 
 function isNumber(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
-  }
+}
+
+function hasPairBrackets(str) {
+    let first = 0;
+    let second = 0;
+    for (el of str) {
+        if (el == '(') {
+            first++;
+            continue;
+        }
+        if (el == ')') {
+            second++;
+            if (second > first) {
+                return false;
+            }
+        }
+    }
+    return first === second;
+}
 
 function expressionCalculator(expr) {
-    reg = expr.split(/(\d+|\+|\-|\*|\/|\(|\))\s*/g).filter(Boolean);
+    reg = expr.trim().split(/(\d+|\+|\-|\*|\/|\(|\))\s*/g).filter(Boolean);
+    if (!hasPairBrackets(expr)) {throw new Error("ExpressionError: Brackets must be paired");}
     let numbers = [];
     let operations = [];
     for (element of reg) {
         if (isNumber(element)) {
             numbers.push(parseFloat(element));
         }
+
+        else if(element == '(') {
+            operations.push(element);
+            continue;
+         }
+
+        else if(element ==')') {
+            while (operations[operations.length-1] != '(' && numbers.length > 1) {
+                b = numbers.pop();
+                a = numbers.pop();
+                action = operations.pop();
+                result = calculate(a, b, action);
+                numbers.push(result);
+            }
+            operations.pop();
+            continue;
+        }
+
         else {
             if (priority[element] > priority[operations[operations.length - 1]] || operations.length == 0){
                 operations.push(element);
                 continue
             }  
-
             while (priority[element] <= priority[operations[operations.length - 1]])
               {
                 b = numbers.pop();
@@ -61,10 +96,12 @@ function calculate(a, b, action) {
         case '*':
             return a * b;
         case '/':
-            return a / b
+            if (b === 0) throw new Error("TypeError: Division by zero.");
+            return a / b;
     }
 }
 
 
-//console.log('test');
-console.log(expressionCalculator('2*5/10 + 14 - 2*3-1/1'));
+module.exports = {
+      expressionCalculator
+}
